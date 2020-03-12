@@ -38,8 +38,8 @@ setup(
         gcloud = nagare.admin.gcloud.pubsub:Commands
 
         [nagare.commands.gcloud]
-        receive = nagare.admin.gcloud.pubsub:Subscribe
-        send = nagare.admin.gcloud.pubsub:Publish
+        subscribe = nagare.admin.gcloud.pubsub:Subscribe
+        publish = nagare.admin.gcloud.pubsub:Publish
 
         [nagare.services]
         gcloud.pub = nagare.services.gcloud.pubsub:Publisher
