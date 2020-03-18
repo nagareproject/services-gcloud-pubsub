@@ -193,5 +193,13 @@ class Subscription(plugin.Plugin):
 
         return self.sub.subscribe(self.path, callback, scheduler=scheduler, *args, **kw)
 
+    def start_consuming(self, callback, *args, **kw):
+        future = self.subscribe(callback, *args, **kw)
+
+        try:
+            future.result()
+        except KeyboardInterrupt:
+            future.cancel()
+
     def __str__(self):
         return self.path
