@@ -58,32 +58,29 @@ class Subscribe(command.Command):
 
         msg.ack()
 
-    def run(self, subscription, topic, services_service):
+    def run(self, subscription, topic, gcloud_pub_service, services_service):
         if topic:
-            topic = services_service(Topic, topic, None, topic) if '/' in topic else services_service[topic]
+            if '/' not in topic:
+                topic = services_service[topic].path
 
-            try:
-                topic.create()
-            except google.api_core.exceptions.AlreadyExists:
-                pass
-
-            subscription = services_service(Subscription, subscription, None, subscription, str(topic))
+            subscription = services_service(Subscription, subscription, None, subscription, topic)
         else:
             subscription = services_service[subscription]
+            topic = subscription.topic
 
         print('Listening on <{}>...'.format(subscription))
+
+        try:
+            gcloud_pub_service.create_topic(topic)
+        except google.api_core.exceptions.AlreadyExists:
+            pass
 
         try:
             subscription.create()
         except google.api_core.exceptions.AlreadyExists:
             pass
 
-        future = subscription.subscribe(self.handle_request)
-
-        try:
-            future.result()
-        except KeyboardInterrupt:
-            future.cancel()
+        subscription.start_consuming(self.handle_request)
 
         return 0
 
@@ -115,6 +112,7 @@ class Publish(command.Command):
         try:
             while True:
                 topic.publish(data.encode('utf-8'))
+                time.sleep(1)
 
                 if not loop:
                     break
