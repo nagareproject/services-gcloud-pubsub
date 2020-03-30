@@ -45,13 +45,13 @@ class Publisher(plugin.Plugin):
             name, dist,
             emulator_host, emulator_port,
             max_bytes, max_latency, max_messages,
-            ordering, credentials,
+            ordering=False, credentials=None,
             client_config=None, client_options=None,
             services_service=None, **config
     ):
         services_service(plugin.Plugin.__init__, self, name, dist, **config)
 
-        if emulator_port:
+        if emulator_host:
             os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
 
         batch_settings = types.BatchSettings(
@@ -64,11 +64,16 @@ class Publisher(plugin.Plugin):
 
         settings = {}
         if credentials is not None:
-            settings['credentials'] = credentials
+            settings['credentials'] = services_service(reference.load_object(credentials)[0])
+
         if client_config is not None:
             settings['client_config'] = client_config
+
         if client_options is not None:
-            settings['client_options'] = reference.load_object(client_options[0]()) if isinstance(client_options, (str, type(u''))) else client_options
+            if isinstance(client_options, (str, type(u''))):
+                settings['client_options'] = services_service(reference.load_object(client_options)[0])
+            else:
+                settings['client_options'] = client_options
 
         self.__class__.proxy_target = PublisherClient(batch_settings, publisher_options, **settings)
 
@@ -117,19 +122,38 @@ class Subscriber(plugin.Plugin):
         plugin.Plugin.CONFIG_SPEC,
         emulator_host='string(default="")',
         emulator_port='integer(default=8085)',
-        client_options='string(default=None)'
+        client_options='string(default=None)',
+        credentials='string(default=None)'
+
     )
     proxy_target = None
 
-    def __init__(self, name, dist, emulator_host, emulator_port, client_options=None, services_service=None, **config):
+    def __init__(
+        self,
+        name, dist,
+        emulator_host, emulator_port,
+        client_options=None, credentials=None,
+        services_service=None, **config
+    ):
         services_service(super(Subscriber, self).__init__, name, dist, **config)
 
         if emulator_host:
             os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
 
         settings = {}
+        if credentials is not None:
+            settings['credentials'] = services_service(reference.load_object(credentials)[0])
+
+        '''
+        if client_config is not None:
+            settings['client_config'] = client_config
+        '''
+
         if client_options is not None:
-            settings['client_options'] = reference.load_object(client_options[0]()) if isinstance(client_options, (str, type(u''))) else client_options
+            if isinstance(client_options, (str, type(u''))):
+                settings['client_options'] = services_service(reference.load_object(client_options)[0])
+            else:
+                settings['client_options'] = client_options
 
         self.__class__.proxy_target = SubscriberClient(**settings)
 
