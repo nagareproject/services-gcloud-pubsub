@@ -45,8 +45,7 @@ class Publisher(plugin.Plugin):
             name, dist,
             emulator_host, emulator_port,
             max_bytes, max_latency, max_messages,
-            ordering=False, credentials=None,
-            client_config=None, client_options=None,
+            ordering=False, client_options=None, credentials=None,
             services_service=None, **config
     ):
         services_service(plugin.Plugin.__init__, self, name, dist, **config)
@@ -66,14 +65,10 @@ class Publisher(plugin.Plugin):
         if credentials is not None:
             settings['credentials'] = services_service(reference.load_object(credentials)[0])
 
-        if client_config is not None:
-            settings['client_config'] = client_config
-
         if client_options is not None:
             if isinstance(client_options, (str, type(u''))):
-                settings['client_options'] = services_service(reference.load_object(client_options)[0])
-            else:
-                settings['client_options'] = client_options
+                client_options = services_service(reference.load_object(client_options)[0])
+            settings['client_options'] = client_options
 
         self.__class__.proxy_target = PublisherClient(batch_settings, publisher_options, **settings)
 
@@ -81,7 +76,12 @@ class Publisher(plugin.Plugin):
 class Topic(plugin.Plugin):
     CONFIG_SPEC = dict(plugin.Plugin.CONFIG_SPEC, path='string', creation='boolean(default=False)')
 
-    def __init__(self, name, dist, path, creation, gcloud_pub_service, services_service, **config):
+    def __init__(
+        self,
+        name, dist,
+        path, creation=False,
+        gcloud_pub_service=None, services_service=None, **config
+    ):
         services_service(super(Topic, self).__init__, name, dist, **config)
 
         self.path = path
@@ -144,16 +144,10 @@ class Subscriber(plugin.Plugin):
         if credentials is not None:
             settings['credentials'] = services_service(reference.load_object(credentials)[0])
 
-        '''
-        if client_config is not None:
-            settings['client_config'] = client_config
-        '''
-
         if client_options is not None:
             if isinstance(client_options, (str, type(u''))):
-                settings['client_options'] = services_service(reference.load_object(client_options)[0])
-            else:
-                settings['client_options'] = client_options
+                client_options = services_service(reference.load_object(client_options)[0])
+            settings['client_options'] = client_options
 
         self.__class__.proxy_target = SubscriberClient(**settings)
 
@@ -162,13 +156,19 @@ class Subscription(plugin.Plugin):
     LOAD_PRIORITY = Topic.LOAD_PRIORITY + 1
     CONFIG_SPEC = dict(
         plugin.Plugin.CONFIG_SPEC,
-        topic_path='string',
         path='string',
+        topic_path='string(default=None)',
         creation='boolean(default=False)',
         pool='integer(default=10)'
     )
 
-    def __init__(self, name, dist, path, topic_path, creation, pool, gcloud_sub_service, services_service, **config):
+    def __init__(
+        self,
+        name, dist,
+        path, topic_path=None,
+        creation=False, pool=10,
+        gcloud_sub_service=None, services_service=None, **config
+    ):
         services_service(super(Subscription, self).__init__, name, dist, **config)
 
         self.path = path

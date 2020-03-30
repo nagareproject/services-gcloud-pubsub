@@ -116,8 +116,6 @@ class Publish(command.Command):
 
                 if not loop:
                     break
-
-                time.sleep(1)
         except KeyboardInterrupt:
             pass
 
