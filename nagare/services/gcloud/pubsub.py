@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2019 Net-ng.
+# Copyright (c) 2008-2020 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -48,7 +48,14 @@ class Publisher(plugin.Plugin):
             ordering=False, client_options=None, credentials=None,
             services_service=None, **config
     ):
-        services_service(plugin.Plugin.__init__, self, name, dist, **config)
+        services_service(
+            plugin.Plugin.__init__,
+            self, name, dist,
+            emulator_host=emulator_host, emulator_port=emulator_port,
+            max_bytes=max_bytes, max_latency=max_latency, max_messages=max_messages,
+            ordering=False, client_options=None, credentials=None,
+            **config
+        )
 
         if emulator_host:
             os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
@@ -82,7 +89,11 @@ class Topic(plugin.Plugin):
         path, creation=False,
         gcloud_pub_service=None, services_service=None, **config
     ):
-        services_service(super(Topic, self).__init__, name, dist, **config)
+        services_service(
+            super(Topic, self).__init__, name, dist,
+            path=path, creation=creation,
+            **config
+        )
 
         self.path = path
         self.creation = creation
@@ -124,7 +135,6 @@ class Subscriber(plugin.Plugin):
         emulator_port='integer(default=8085)',
         client_options='string(default=None)',
         credentials='string(default=None)'
-
     )
     proxy_target = None
 
@@ -135,7 +145,12 @@ class Subscriber(plugin.Plugin):
         client_options=None, credentials=None,
         services_service=None, **config
     ):
-        services_service(super(Subscriber, self).__init__, name, dist, **config)
+        services_service(
+            super(Subscriber, self).__init__, name, dist,
+            emulator_host=emulator_host, emulator_port=emulator_port,
+            client_options=client_options, credentials=credentials,
+            **config
+        )
 
         if emulator_host:
             os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
@@ -169,7 +184,12 @@ class Subscription(plugin.Plugin):
         creation=False, pool=10,
         gcloud_sub_service=None, services_service=None, **config
     ):
-        services_service(super(Subscription, self).__init__, name, dist, **config)
+        services_service(
+            super(Subscription, self).__init__, name, dist,
+            path=path, topic_path=topic_path,
+            creation=creation, pool=pool,
+            **config
+        )
 
         self.path = path
         self.topic = topic_path
