@@ -100,8 +100,8 @@ class Topic(plugin.Plugin):
         self.pub = gcloud_pub_service
 
     @property
-    def subscriptions(self, *args, **kw):
-        return self.pub.list_topic_subscriptions(self.path, *args, **kw)
+    def subscriptions(self):
+        return self.pub.list_topic_subscriptions({'topic': self.path})
 
     def handle_start(self, app):
         if self.creation:
@@ -110,14 +110,14 @@ class Topic(plugin.Plugin):
             except exceptions.AlreadyExists:
                 pass
 
-    def create(self, *args, **kw):
-        return self.pub.create_topic(self.path, *args, **kw)
+    def create(self, **kw):
+        return self.pub.create_topic({'name': self.path}, **kw)
 
-    def delete(self, *args, **kw):
-        self.pub.delete_topic(self.path, *args, **kw)
+    def delete(self, **kw):
+        self.pub.delete_topic({'topic': self.path}, **kw)
 
     def publish(self, data, ordering_key='', *args, **kw):
-        return self.pub.publish(self.path, data, ordering_key, *args, **kw)
+        return self.pub.publish(self.path, data, ordering_key=ordering_key, *args, **kw)
 
     def resume_publish(self, ordering_key, *args, **kw):
         self.pub.resume_publish(self.path, ordering_key, *args, **kw)
@@ -204,32 +204,41 @@ class Subscription(plugin.Plugin):
             except exceptions.AlreadyExists:
                 pass
 
-    def create(self, *args, **kw):
-        return self.sub.create_subscription(self.path, self.topic, *args, **kw)
+    def create(self, **kw):
+        return self.sub.create_subscription({'name': self.path, 'topic': self.topic}, **kw)
 
-    def delete(self, *args, **kw):
-        self.sub.delete(self.path, *args, **kw)
+    def delete(self, **kw):
+        self.sub.delete_subscription({'subscription': self.path}, **kw)
 
-    def acknowledge(self, ack_ids, *args, **kw):
-        self.sub.acknowledge(self.path, ack_ids, *args, **kw)
+    def acknowledge(self, ack_ids, **kw):
+        self.sub.acknowledge({'subscription': self.path, 'ack_ids': ack_ids}, **kw)
 
-    def modify_ack_deadline(self, *args, **kw):
-        self.sub.modify_ack_deadline(self.path, *args, **kw)
+    def modify_ack_deadline(self, ack_ids, ack_deadline_seconds, **kw):
+        self.sub.modify_ack_deadline({
+            'subscription': self.path,
+            'ack_ids': ack_ids,
+            'ack_deadline_seconds': ack_deadline_seconds
+        }, **kw)
 
-    def modify_push_config(self, *args, **kw):
-        self.sub.modify_push_config(self.path, *args, **kw)
+    def modify_push_config(self, **kw):
+        self.sub.modify_push_config({'subscription': self.path}, **kw)
 
-    def update(self, *args, **kw):
-        return self.sub.update_subscription(self.path, *args, **kw)
+    def create_snapshot(self, name=None, **kw):
+        return self.sub.create_snapshot({'subscription': self.path, 'name': name}, **kw)
 
-    def create_snapshot(self, name, *args, **kw):
-        return self.sub.create_snapshot(name, self.path, *args, **kw)
+    def pull(self, max_messages, **kw):
+        return self.sub.pull({'subscription': self.path, 'max_messages': max_messages}, **kw)
 
-    def pull(self, *args, **kw):
-        return self.sub.pull(self.path, *args, **kw)
+    def seek(self, snapshot=None, time=None, **kw):
+        request = {'subscription': self.path}
 
-    def seek(self, *args, **kw):
-        return self.sub.seek(self.path, *args, **kw)
+        if snapshot is not None:
+            request['snapshot'] = snapshot
+
+        if time is not None:
+            request['time'] = time
+
+        return self.sub.seek(request, **kw)
 
     def subscribe(self, callback, *args, **kw):
         executor = concurrent.futures.ThreadPoolExecutor(self.pool)

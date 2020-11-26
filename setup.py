@@ -42,7 +42,7 @@ setup(
     zip_safe=False,
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
-    install_requires=['google-cloud-pubsub', 'nagare-server'],
+    install_requires=['google-cloud-pubsub>=2.0.0,<3.0.0', 'nagare-server'],
     entry_points='''
         [nagare.commands]
         gcloud = nagare.admin.gcloud.pubsub:Commands

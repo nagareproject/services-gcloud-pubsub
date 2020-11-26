@@ -71,7 +71,7 @@ class Subscribe(command.Command):
         print('Listening on <{}>...'.format(subscription))
 
         try:
-            gcloud_pub_service.create_topic(topic)
+            gcloud_pub_service.create_topic({'name': topic})
         except google.api_core.exceptions.AlreadyExists:
             pass
 
