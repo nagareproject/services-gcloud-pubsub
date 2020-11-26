@@ -9,10 +9,20 @@
 # this distribution.
 # --
 
+import sys
+import subprocess
 from os import path
+
 
 from setuptools import setup, find_packages
 
+try:
+    import stackless  # noqa: F401
+
+    # Under Stackless Python or PyPy, the pre-compiled protobuf wheel ends with a segfault
+    subprocess.check_call([sys.executable] + ' -m pip install --no-binary :all: protobuf'.split())
+except ImportError:
+    pass
 
 here = path.normpath(path.dirname(__file__))
 
