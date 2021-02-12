@@ -20,7 +20,7 @@ try:
     import stackless  # noqa: F401
 
     # Under Stackless Python or PyPy, the pre-compiled protobuf wheel ends with a segfault
-    subprocess.check_call([sys.executable] + ' -m pip install --no-binary :all: protobuf'.split())
+    subprocess.check_call([sys.executable] + ' -m pip install --no-binary :all: protobuf grpcio'.split())
 except ImportError:
     pass
 

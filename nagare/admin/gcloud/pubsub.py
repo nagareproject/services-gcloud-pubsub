@@ -92,7 +92,7 @@ class Publish(command.Command):
     def set_arguments(self, parser):
         parser.add_argument(
             '-l', '--loop', action='store_true',
-            help='infinite loop sending <data> each 2 secondes'
+            help='infinite loop sending <data> each 2 seconds'
         )
 
         parser.add_argument('topic', help='topic service or topic path')

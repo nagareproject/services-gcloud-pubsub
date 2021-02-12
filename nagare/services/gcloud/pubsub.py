@@ -12,7 +12,7 @@
 """Provides classes to interact with the Google cloud pub/sub service"""
 
 import os
-
+import platform
 import concurrent
 
 from nagare.server import reference
@@ -20,6 +20,9 @@ from nagare.services import plugin, proxy
 
 from google.api_core import exceptions
 from google.cloud.pubsub_v1 import subscriber, PublisherClient, SubscriberClient, types
+
+if platform.system() == 'Linux':
+    os.environ['GRPC_POLL_STRATEGY'] = 'epoll1'
 
 
 @proxy.proxy_to(PublisherClient)
