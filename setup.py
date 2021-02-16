@@ -19,7 +19,7 @@ from setuptools import setup, find_packages
 try:
     import stackless  # noqa: F401
 
-    # Under Stackless Python or PyPy, the pre-compiled protobuf wheel ends with a segfault
+    # Under Stackless Python or PyPy, the pre-compiled protobuf and grpcio wheels end with a segfault
     subprocess.check_call([sys.executable] + ' -m pip install --no-binary :all: protobuf grpcio'.split())
 except ImportError:
     pass
@@ -42,7 +42,7 @@ setup(
     zip_safe=False,
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
-    install_requires=['google-cloud-pubsub>=2.0.0,<3.0.0', 'nagare-server'],
+    install_requires=['google-cloud-pubsub>=2.3.0,<3.0.0', 'nagare-server'],
     entry_points='''
         [nagare.commands]
         gcloud = nagare.admin.gcloud.pubsub:Commands

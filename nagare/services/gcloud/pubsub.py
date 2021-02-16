@@ -18,10 +18,14 @@ import concurrent
 from nagare.server import reference
 from nagare.services import plugin, proxy
 
+import grpc
 from google.api_core import exceptions
+from google.pubsub_v1.services.publisher.transports import PublisherGrpcTransport
+from google.pubsub_v1.services.subscriber.transports import SubscriberGrpcTransport
 from google.cloud.pubsub_v1 import subscriber, PublisherClient, SubscriberClient, types
 
-if platform.system() == 'Linux':
+
+if (platform.system() == 'Linux') and ('GRPC_POLL_STRATEGY' not in os.environ):
     os.environ['GRPC_POLL_STRATEGY'] = 'epoll1'
 
 
@@ -60,9 +64,6 @@ class Publisher(plugin.Plugin):
             **config
         )
 
-        if emulator_host:
-            os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
-
         batch_settings = types.BatchSettings(
             max_bytes=max_bytes,
             max_latency=max_latency,
@@ -72,15 +73,26 @@ class Publisher(plugin.Plugin):
         publisher_options = types.PublisherOptions(enable_message_ordering=ordering)
 
         settings = {}
-        if credentials is not None:
-            settings['credentials'] = services_service(reference.load_object(credentials)[0])
-
         if client_options is not None:
             if isinstance(client_options, (str, type(u''))):
                 client_options = services_service(reference.load_object(client_options)[0])
             settings['client_options'] = client_options
 
-        self.__class__.proxy_target = PublisherClient(batch_settings, publisher_options, **settings)
+        if emulator_host:
+            channel = grpc.insecure_channel('{}:{}'.format(emulator_host, emulator_port))
+            transport = PublisherGrpcTransport(channel=channel)
+        else:
+            transport = None
+
+            if credentials is not None:
+                settings['credentials'] = services_service(reference.load_object(credentials)[0])
+
+        self.__class__.proxy_target = PublisherClient(
+            batch_settings,
+            publisher_options,
+            transport=transport,
+            **settings
+        )
 
 
 class Topic(plugin.Plugin):
@@ -155,19 +167,22 @@ class Subscriber(plugin.Plugin):
             **config
         )
 
-        if emulator_host:
-            os.environ['PUBSUB_EMULATOR_HOST'] = '{}:{}'.format(emulator_host, emulator_port)
-
         settings = {}
-        if credentials is not None:
-            settings['credentials'] = services_service(reference.load_object(credentials)[0])
-
         if client_options is not None:
             if isinstance(client_options, (str, type(u''))):
                 client_options = services_service(reference.load_object(client_options)[0])
             settings['client_options'] = client_options
 
-        self.__class__.proxy_target = SubscriberClient(**settings)
+        if emulator_host:
+            channel = grpc.insecure_channel('{}:{}'.format(emulator_host, emulator_port))
+            transport = SubscriberGrpcTransport(channel=channel)
+        else:
+            transport = None
+
+            if credentials is not None:
+                settings['credentials'] = services_service(reference.load_object(credentials)[0])
+
+        self.__class__.proxy_target = SubscriberClient(transport=transport, **settings)
 
 
 class Subscription(plugin.Plugin):
