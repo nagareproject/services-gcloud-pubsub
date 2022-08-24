@@ -111,7 +111,7 @@ class Publish(command.Command):
 
         try:
             while True:
-                topic.publish(data.encode('utf-8'))
+                topic.publish(data.encode('utf-8')).result()
                 time.sleep(1)
 
                 if not loop:
