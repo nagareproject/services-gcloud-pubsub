@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -9,21 +9,21 @@
 # this distribution.
 # --
 
-"""Provides classes to interact with the Google cloud pub/sub service"""
+"""Provides classes to interact with the Google cloud pub/sub service."""
 
 import os
 import platform
 import concurrent
-
-from nagare.server import reference
-from nagare.services import plugin, proxy
+import contextlib
 
 import grpc
 from google.api_core import exceptions
+from google.cloud.pubsub_v1 import PublisherClient, SubscriberClient, types, subscriber
 from google.pubsub_v1.services.publisher.transports import PublisherGrpcTransport
 from google.pubsub_v1.services.subscriber.transports import SubscriberGrpcTransport
-from google.cloud.pubsub_v1 import subscriber, PublisherClient, SubscriberClient, types
 
+from nagare.server import reference
+from nagare.services import proxy, plugin
 
 if (platform.system() == 'Linux') and ('GRPC_POLL_STRATEGY' not in os.environ):
     os.environ['GRPC_POLL_STRATEGY'] = 'epoll1'
@@ -31,9 +31,6 @@ if (platform.system() == 'Linux') and ('GRPC_POLL_STRATEGY' not in os.environ):
 
 @proxy.proxy_to(PublisherClient)
 class Publisher(plugin.Plugin):
-    """
-    """
-    LOAD_PRIORITY = 10
     CONFIG_SPEC = dict(
         plugin.Plugin.CONFIG_SPEC,
         emulator_host='string(default="")',
@@ -43,38 +40,48 @@ class Publisher(plugin.Plugin):
         max_messages='integer(default={})'.format(types.BatchSettings().max_messages),
         ordering='boolean(default=False)',
         client_options='string(default=None)',
-        credentials='string(default=None)'
+        credentials='string(default=None)',
     )
     proxy_target = None
 
     def __init__(
-            self,
-            name, dist,
-            emulator_host, emulator_port,
-            max_bytes, max_latency, max_messages,
-            ordering=False, client_options=None, credentials=None,
-            services_service=None, **config
+        self,
+        name,
+        dist,
+        emulator_host,
+        emulator_port,
+        max_bytes,
+        max_latency,
+        max_messages,
+        ordering=False,
+        client_options=None,
+        credentials=None,
+        services_service=None,
+        **config,
     ):
         services_service(
             plugin.Plugin.__init__,
-            self, name, dist,
-            emulator_host=emulator_host, emulator_port=emulator_port,
-            max_bytes=max_bytes, max_latency=max_latency, max_messages=max_messages,
-            ordering=False, client_options=None, credentials=None,
-            **config
-        )
-
-        batch_settings = types.BatchSettings(
+            self,
+            name,
+            dist,
+            emulator_host=emulator_host,
+            emulator_port=emulator_port,
             max_bytes=max_bytes,
             max_latency=max_latency,
-            max_messages=max_messages
+            max_messages=max_messages,
+            ordering=False,
+            client_options=None,
+            credentials=None,
+            **config,
         )
+
+        batch_settings = types.BatchSettings(max_bytes=max_bytes, max_latency=max_latency, max_messages=max_messages)
 
         publisher_options = types.PublisherOptions(enable_message_ordering=ordering)
 
         settings = {}
         if client_options is not None:
-            if isinstance(client_options, (str, type(u''))):
+            if isinstance(client_options, str):
                 client_options = services_service(reference.load_object(client_options)[0])
             settings['client_options'] = client_options
 
@@ -88,10 +95,7 @@ class Publisher(plugin.Plugin):
                 settings['credentials'] = services_service(reference.load_object(credentials)[0])
 
         self.__class__.proxy_target = PublisherClient(
-            batch_settings,
-            publisher_options,
-            transport=transport,
-            **settings
+            batch_settings, publisher_options, transport=transport, **settings
         )
 
 
@@ -100,14 +104,21 @@ class Topic(plugin.Plugin):
 
     def __init__(
         self,
-        name, dist,
-        path, creation=False,
-        gcloud_pub_service=None, services_service=None, **config
+        name,
+        dist,
+        path,
+        creation=False,
+        gcloud_pub_service=None,
+        services_service=None,
+        **config,
     ):
         services_service(
-            super(Topic, self).__init__, name, dist,
-            path=path, creation=creation,
-            **config
+            super(Topic, self).__init__,
+            name,
+            dist,
+            path=path,
+            creation=creation,
+            **config,
         )
 
         self.path = path
@@ -120,10 +131,8 @@ class Topic(plugin.Plugin):
 
     def handle_start(self, app):
         if self.creation:
-            try:
+            with contextlib.suppress(exceptions.AlreadyExists):
                 self.create()
-            except exceptions.AlreadyExists:
-                pass
 
     def create(self, **kw):
         return self.pub.create_topic({'name': self.path}, **kw)
@@ -143,33 +152,40 @@ class Topic(plugin.Plugin):
 
 @proxy.proxy_to(SubscriberClient)
 class Subscriber(plugin.Plugin):
-    LOAD_PRIORITY = 10
     CONFIG_SPEC = dict(
         plugin.Plugin.CONFIG_SPEC,
         emulator_host='string(default="")',
         emulator_port='integer(default=8085)',
         client_options='string(default=None)',
-        credentials='string(default=None)'
+        credentials='string(default=None)',
     )
     proxy_target = None
 
     def __init__(
         self,
-        name, dist,
-        emulator_host, emulator_port,
-        client_options=None, credentials=None,
-        services_service=None, **config
+        name,
+        dist,
+        emulator_host,
+        emulator_port,
+        client_options=None,
+        credentials=None,
+        services_service=None,
+        **config,
     ):
         services_service(
-            super(Subscriber, self).__init__, name, dist,
-            emulator_host=emulator_host, emulator_port=emulator_port,
-            client_options=client_options, credentials=credentials,
-            **config
+            super(Subscriber, self).__init__,
+            name,
+            dist,
+            emulator_host=emulator_host,
+            emulator_port=emulator_port,
+            client_options=client_options,
+            credentials=credentials,
+            **config,
         )
 
         settings = {}
         if client_options is not None:
-            if isinstance(client_options, (str, type(u''))):
+            if isinstance(client_options, str):
                 client_options = services_service(reference.load_object(client_options)[0])
             settings['client_options'] = client_options
 
@@ -192,21 +208,30 @@ class Subscription(plugin.Plugin):
         path='string',
         topic_path='string(default=None)',
         creation='boolean(default=False)',
-        pool='integer(default=10)'
+        pool='integer(default=10)',
     )
 
     def __init__(
         self,
-        name, dist,
-        path, topic_path=None,
-        creation=False, pool=10,
-        gcloud_sub_service=None, services_service=None, **config
+        name,
+        dist,
+        path,
+        topic_path=None,
+        creation=False,
+        pool=10,
+        gcloud_sub_service=None,
+        services_service=None,
+        **config,
     ):
         services_service(
-            super(Subscription, self).__init__, name, dist,
-            path=path, topic_path=topic_path,
-            creation=creation, pool=pool,
-            **config
+            super(Subscription, self).__init__,
+            name,
+            dist,
+            path=path,
+            topic_path=topic_path,
+            creation=creation,
+            pool=pool,
+            **config,
         )
 
         self.path = path
@@ -217,10 +242,8 @@ class Subscription(plugin.Plugin):
 
     def handle_start(self, app):
         if self.creation:
-            try:
+            with contextlib.suppress(exceptions.AlreadyExists):
                 self.create()
-            except exceptions.AlreadyExists:
-                pass
 
     def create(self, **kw):
         return self.sub.create_subscription({'name': self.path, 'topic': self.topic}, **kw)
@@ -232,11 +255,14 @@ class Subscription(plugin.Plugin):
         self.sub.acknowledge({'subscription': self.path, 'ack_ids': ack_ids}, **kw)
 
     def modify_ack_deadline(self, ack_ids, ack_deadline_seconds, **kw):
-        self.sub.modify_ack_deadline({
-            'subscription': self.path,
-            'ack_ids': ack_ids,
-            'ack_deadline_seconds': ack_deadline_seconds
-        }, **kw)
+        self.sub.modify_ack_deadline(
+            {
+                'subscription': self.path,
+                'ack_ids': ack_ids,
+                'ack_deadline_seconds': ack_deadline_seconds,
+            },
+            **kw,
+        )
 
     def modify_push_config(self, **kw):
         self.sub.modify_push_config({'subscription': self.path}, **kw)

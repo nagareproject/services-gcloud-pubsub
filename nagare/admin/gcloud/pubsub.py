@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -8,6 +8,7 @@
 # --
 
 import time
+import contextlib
 
 import google
 
@@ -70,15 +71,11 @@ class Subscribe(command.Command):
 
         print('Listening on <{}>...'.format(subscription))
 
-        try:
+        with contextlib.suppress(google.api_core.exceptions.AlreadyExists):
             gcloud_pub_service.create_topic({'name': topic})
-        except google.api_core.exceptions.AlreadyExists:
-            pass
 
-        try:
+        with contextlib.suppress(google.api_core.exceptions.AlreadyExists):
             subscription.create()
-        except google.api_core.exceptions.AlreadyExists:
-            pass
 
         subscription.start_consuming(self.handle_request)
 
@@ -91,8 +88,10 @@ class Publish(command.Command):
 
     def set_arguments(self, parser):
         parser.add_argument(
-            '-l', '--loop', action='store_true',
-            help='infinite loop sending <data> each 2 seconds'
+            '-l',
+            '--loop',
+            action='store_true',
+            help='infinite loop sending <data> each 2 seconds',
         )
 
         parser.add_argument('topic', help='topic service or topic path')
@@ -104,10 +103,8 @@ class Publish(command.Command):
     def run(loop, topic, data, services_service):
         topic = services_service(Topic, topic, None, topic) if '/' in topic else services_service[topic]
 
-        try:
+        with contextlib.suppress(google.api_core.exceptions.AlreadyExists):
             topic.create()
-        except google.api_core.exceptions.AlreadyExists:
-            pass
 
         try:
             while True:
