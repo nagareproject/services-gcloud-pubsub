@@ -100,6 +100,7 @@ class Publisher(plugin.Plugin):
 
 
 class Topic(plugin.Plugin):
+    LOAD_PRIORITY = Publisher.LOAD_PRIORITY + 1
     CONFIG_SPEC = dict(plugin.Plugin.CONFIG_SPEC, path='string', creation='boolean(default=False)')
 
     def __init__(
@@ -202,7 +203,7 @@ class Subscriber(plugin.Plugin):
 
 
 class Subscription(plugin.Plugin):
-    LOAD_PRIORITY = Topic.LOAD_PRIORITY + 1
+    LOAD_PRIORITY = Subscriber.LOAD_PRIORITY + 1
     CONFIG_SPEC = dict(
         plugin.Plugin.CONFIG_SPEC,
         path='string',
