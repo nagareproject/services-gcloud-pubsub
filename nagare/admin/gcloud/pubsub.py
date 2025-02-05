@@ -93,6 +93,9 @@ class Publish(command.Command):
             action='store_true',
             help='infinite loop sending <data> each 2 seconds',
         )
+        parser.add_argument(
+            '-a', '--attr', action='append', metavar='key=value', dest='attributes', help='metadata attribute'
+        )
 
         parser.add_argument('topic', help='topic service or topic path')
         parser.add_argument('data', help='data to send')
@@ -100,7 +103,7 @@ class Publish(command.Command):
         super(Publish, self).set_arguments(parser)
 
     @staticmethod
-    def run(loop, topic, data, services_service):
+    def run(loop, topic, data, attributes, services_service):
         topic = services_service(Topic, topic, None, topic) if '/' in topic else services_service[topic]
 
         with contextlib.suppress(google.api_core.exceptions.AlreadyExists):
@@ -108,7 +111,9 @@ class Publish(command.Command):
 
         try:
             while True:
-                topic.publish(data.encode('utf-8')).result()
+                topic.publish(
+                    data.encode('utf-8'), **dict(attribute.split('=', 1) for attribute in (attributes or []))
+                ).result()
                 time.sleep(1)
 
                 if not loop:

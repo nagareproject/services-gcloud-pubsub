@@ -13,7 +13,6 @@ import sys
 import subprocess
 from os import path
 
-
 from setuptools import setup, find_packages
 
 try:
@@ -40,14 +39,14 @@ setup(
     project_urls={
         'Documentation': 'https://nagare.org/doc',
         'Source': 'https://github.com/nagareproject/services-gcloud-pubsub',
-        'Tracker': 'https://github.com/nagareproject/services-gcloud-pubsub/issues'
+        'Tracker': 'https://github.com/nagareproject/services-gcloud-pubsub/issues',
     },
     packages=find_packages(),
     zip_safe=False,
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
     install_requires=['google-cloud-pubsub>=2.3.0,<3.0.0', 'nagare-server'],
-    entry_points='''
+    entry_points="""
         [nagare.commands]
         gcloud = nagare.admin.gcloud.pubsub:Commands
 
@@ -58,5 +57,5 @@ setup(
         [nagare.services]
         gcloud.pub = nagare.services.gcloud.pubsub:Publisher
         gcloud.sub = nagare.services.gcloud.pubsub:Subscriber
-    '''
+    """,
 )

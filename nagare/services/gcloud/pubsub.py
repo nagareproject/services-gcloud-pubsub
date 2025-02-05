@@ -153,6 +153,7 @@ class Topic(plugin.Plugin):
 
 @proxy.proxy_to(SubscriberClient)
 class Subscriber(plugin.Plugin):
+    LOAD_PRIORITY = Topic.LOAD_PRIORITY + 1
     CONFIG_SPEC = dict(
         plugin.Plugin.CONFIG_SPEC,
         emulator_host='string(default="")',
@@ -208,6 +209,7 @@ class Subscription(plugin.Plugin):
         plugin.Plugin.CONFIG_SPEC,
         path='string',
         topic_path='string(default=None)',
+        filter='string(default="")',
         creation='boolean(default=False)',
         pool='integer(default=10)',
     )
@@ -218,6 +220,7 @@ class Subscription(plugin.Plugin):
         dist,
         path,
         topic_path=None,
+        filter='',
         creation=False,
         pool=10,
         gcloud_sub_service=None,
@@ -230,6 +233,7 @@ class Subscription(plugin.Plugin):
             dist,
             path=path,
             topic_path=topic_path,
+            filter=filter,
             creation=creation,
             pool=pool,
             **config,
@@ -237,6 +241,7 @@ class Subscription(plugin.Plugin):
 
         self.path = path
         self.topic = topic_path
+        self.filter = filter
         self.creation = creation
         self.pool = pool
         self.sub = gcloud_sub_service
@@ -247,7 +252,7 @@ class Subscription(plugin.Plugin):
                 self.create()
 
     def create(self, **kw):
-        return self.sub.create_subscription({'name': self.path, 'topic': self.topic}, **kw)
+        return self.sub.create_subscription({'name': self.path, 'topic': self.topic, 'filter': self.filter}, **kw)
 
     def delete(self, **kw):
         self.sub.delete_subscription({'subscription': self.path}, **kw)
