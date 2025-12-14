@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2014-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -25,28 +25,28 @@ class Subscribe(command.Command):
     DESC = 'subscribe to a topic'
 
     def __init__(self, name, dist, **config):
-        super(Subscribe, self).__init__(name, dist, **config)
+        super().__init__(name, dist, **config)
         self.nb = 0
 
     def set_arguments(self, parser):
         parser.add_argument('-t', '--topic', help='topic service or topic path to subscribe to')
         parser.add_argument('subscription', help='name of the subscription to receive from')
 
-        super(Subscribe, self).set_arguments(parser)
+        super().set_arguments(parser)
 
     def handle_request(self, msg):
-        print('- {} --------------------'.format(self.nb))
+        print(f'- {self.nb} --------------------')
 
-        print('Id: {}'.format(msg.message_id))
-        print('Time: {}'.format(msg.publish_time))
+        print(f'Id: {msg.message_id}')
+        print(f'Time: {msg.publish_time}')
         attempt = msg.delivery_attempt
         if attempt is not None:
-            print('Attempts: {}'.format(attempt))
+            print(f'Attempts: {attempt}')
         order = msg.ordering_key
         if order:
             print('Order:', order)
-        print('Size: {}'.format(msg.size))
-        print('Body: {}'.format(msg.data))
+            print('Size:', msg.size)
+            print('Body:', msg.data)
 
         if msg.attributes:
             print('Attributes:')
@@ -69,7 +69,7 @@ class Subscribe(command.Command):
             subscription = services_service[subscription]
             topic = subscription.topic
 
-        print('Listening on <{}>...'.format(subscription))
+        print(f'Listening on <{subscription}>...')
 
         with contextlib.suppress(google.api_core.exceptions.AlreadyExists):
             gcloud_pub_service.create_topic({'name': topic})
@@ -100,7 +100,7 @@ class Publish(command.Command):
         parser.add_argument('topic', help='topic service or topic path')
         parser.add_argument('data', help='data to send')
 
-        super(Publish, self).set_arguments(parser)
+        super().set_arguments(parser)
 
     @staticmethod
     def run(loop, topic, data, attributes, services_service):

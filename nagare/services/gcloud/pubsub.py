@@ -1,7 +1,5 @@
-# Encoding: utf-8
-
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2014-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -31,17 +29,16 @@ if (platform.system() == 'Linux') and ('GRPC_POLL_STRATEGY' not in os.environ):
 
 @proxy.proxy_to(PublisherClient)
 class Publisher(plugin.Plugin):
-    CONFIG_SPEC = dict(
-        plugin.Plugin.CONFIG_SPEC,
-        emulator_host='string(default="")',
-        emulator_port='integer(default=8085)',
-        max_bytes='integer(default={})'.format(types.BatchSettings().max_bytes),
-        max_latency='float(default={})'.format(types.BatchSettings().max_latency),
-        max_messages='integer(default={})'.format(types.BatchSettings().max_messages),
-        ordering='boolean(default=False)',
-        client_options='string(default=None)',
-        credentials='string(default=None)',
-    )
+    CONFIG_SPEC = plugin.Plugin.CONFIG_SPEC | {
+        'emulator_host': 'string(default="")',
+        'emulator_port': 'integer(default=8085)',
+        'max_bytes': 'integer(default={})'.format(types.BatchSettings().max_bytes),
+        'max_latency': 'float(default={})'.format(types.BatchSettings().max_latency),
+        'max_messages': 'integer(default={})'.format(types.BatchSettings().max_messages),
+        'ordering': 'boolean(default=False)',
+        'client_options': 'string(default=None)',
+        'credentials': 'string(default=None)',
+    }
     proxy_target = None
 
     def __init__(
@@ -60,7 +57,7 @@ class Publisher(plugin.Plugin):
         **config,
     ):
         services_service(
-            plugin.Plugin.__init__,
+            super().__init__,
             self,
             name,
             dist,
@@ -86,7 +83,7 @@ class Publisher(plugin.Plugin):
             settings['client_options'] = client_options
 
         if emulator_host:
-            channel = grpc.insecure_channel('{}:{}'.format(emulator_host, emulator_port))
+            channel = grpc.insecure_channel(f'{emulator_host}:{emulator_port}')
             transport = PublisherGrpcTransport(channel=channel)
         else:
             transport = None
@@ -101,7 +98,7 @@ class Publisher(plugin.Plugin):
 
 class Topic(plugin.Plugin):
     LOAD_PRIORITY = Publisher.LOAD_PRIORITY + 1
-    CONFIG_SPEC = dict(plugin.Plugin.CONFIG_SPEC, path='string', creation='boolean(default=False)')
+    CONFIG_SPEC = plugin.Plugin.CONFIG_SPEC | {'path': 'string', 'creation': 'boolean(default=False)'}
 
     def __init__(
         self,
@@ -114,7 +111,7 @@ class Topic(plugin.Plugin):
         **config,
     ):
         services_service(
-            super(Topic, self).__init__,
+            super().__init__,
             name,
             dist,
             path=path,
@@ -154,13 +151,12 @@ class Topic(plugin.Plugin):
 @proxy.proxy_to(SubscriberClient)
 class Subscriber(plugin.Plugin):
     LOAD_PRIORITY = Topic.LOAD_PRIORITY + 1
-    CONFIG_SPEC = dict(
-        plugin.Plugin.CONFIG_SPEC,
-        emulator_host='string(default="")',
-        emulator_port='integer(default=8085)',
-        client_options='string(default=None)',
-        credentials='string(default=None)',
-    )
+    CONFIG_SPEC = plugin.Plugin.CONFIG_SPEC | {
+        'emulator_host': 'string(default="")',
+        'emulator_port': 'integer(default=8085)',
+        'client_options': 'string(default=None)',
+        'credentials': 'string(default=None)',
+    }
     proxy_target = None
 
     def __init__(
@@ -175,7 +171,7 @@ class Subscriber(plugin.Plugin):
         **config,
     ):
         services_service(
-            super(Subscriber, self).__init__,
+            super().__init__,
             name,
             dist,
             emulator_host=emulator_host,
@@ -192,7 +188,7 @@ class Subscriber(plugin.Plugin):
             settings['client_options'] = client_options
 
         if emulator_host:
-            channel = grpc.insecure_channel('{}:{}'.format(emulator_host, emulator_port))
+            channel = grpc.insecure_channel(f'{emulator_host}:{emulator_port}')
             transport = SubscriberGrpcTransport(channel=channel)
         else:
             transport = None
@@ -205,14 +201,13 @@ class Subscriber(plugin.Plugin):
 
 class Subscription(plugin.Plugin):
     LOAD_PRIORITY = Subscriber.LOAD_PRIORITY + 1
-    CONFIG_SPEC = dict(
-        plugin.Plugin.CONFIG_SPEC,
-        path='string',
-        topic_path='string(default=None)',
-        filter='string(default="")',
-        creation='boolean(default=False)',
-        pool='integer(default=10)',
-    )
+    CONFIG_SPEC = plugin.Plugin.CONFIG_SPEC | {
+        'path': 'string',
+        'topic_path': 'string(default=None)',
+        'filter': 'string(default="")',
+        'creation': 'boolean(default=False)',
+        'pool': 'integer(default=10)',
+    }
 
     def __init__(
         self,
@@ -228,7 +223,7 @@ class Subscription(plugin.Plugin):
         **config,
     ):
         services_service(
-            super(Subscription, self).__init__,
+            super().__init__,
             name,
             dist,
             path=path,

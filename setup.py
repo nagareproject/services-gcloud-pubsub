@@ -1,7 +1,5 @@
-# Encoding: utf-8
-
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2014-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -19,7 +17,7 @@ try:
     import stackless  # noqa: F401
 
     # Under Stackless Python or PyPy, the pre-compiled protobuf and grpcio wheels end with a segfault
-    subprocess.check_call([sys.executable] + ' -m pip install --no-binary :all: protobuf grpcio'.split())
+    subprocess.check_call([sys.executable] + ['-m', 'pip', 'install', '--no-binary', ':all:', 'protobuf', 'grpcio'])
 except ImportError:
     pass
 
