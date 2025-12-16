@@ -58,7 +58,6 @@ class Publisher(plugin.Plugin):
     ):
         services_service(
             super().__init__,
-            self,
             name,
             dist,
             emulator_host=emulator_host,
