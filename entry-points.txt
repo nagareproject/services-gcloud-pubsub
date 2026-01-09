@@ -1,0 +1,10 @@
+[nagare.commands]
+gcloud = nagare.admin.gcloud.pubsub:Commands
+
+[nagare.commands.gcloud]
+subscribe = nagare.admin.gcloud.pubsub:Subscribe
+publish = nagare.admin.gcloud.pubsub:Publish
+
+[nagare.services]
+gcloud.pub = nagare.services.gcloud.pubsub:Publisher
+gcloud.sub = nagare.services.gcloud.pubsub:Subscriber
