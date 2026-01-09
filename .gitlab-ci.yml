@@ -12,5 +12,5 @@
 tests:
   script:
     - pip3 install ruff
-    - ruff format --check nagare
-    - ruff check nagare
+    - ruff format --check src
+    - ruff check src
