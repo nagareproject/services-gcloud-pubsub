@@ -2,8 +2,8 @@
 
 clean:
 	@rm -rf build dist
-	@rm -rf *.egg-info
-	@find nagare \( -name '*.py[co]' -o -name '__pycache__' \) -delete
+	@rm -rf src/*.egg-info
+	@find src \( -name '*.py[co]' -o -name '__pycache__' \) -delete
 	@rm -rf doc/_build/*
 
 upgrade-precommit:
@@ -16,15 +16,15 @@ install-dev: clean
 	$(MAKE) upgrade-precommit
 
 tests:
-	python -m pytest nagare
+	python -m pytest
 
 qa:
-	python -m ruff check nagare
-	python -m ruff format --check nagare
+	python -m ruff check src
+	python -m ruff format --check src
 
 qa-fix:
-	python -m ruff check --fix nagare
-	python -m ruff format nagare
+	python -m ruff check --fix src
+	python -m ruff format src
 
 doc:
 	python -m sphinx.cmd.build -b html doc doc/_build
